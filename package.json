@@ -1,23 +1,21 @@
-﻿{
-    "name":  "gakushu-plus",
-    "version":  "1.0.0",
-    "main":  "api/index.js",
-    "scripts":  {
-                    "test":  "echo no test",
-                    "dev":  "node server.js",
-                    "start":  "node api/index.js"
-                },
-    "keywords":  [
-
-                 ],
-    "author":  "",
-    "license":  "ISC",
-    "description":  "",
-    "dependencies":  {
-                         "@supabase/supabase-js":  "^2.108.1",
-                         "cors":  "^2.8.6",
-                         "express":  "^5.2.1",
-                         "tweetnacl":  "^1.0.3",
-                         "tweetnacl-util":  "^0.15.1"
-                     }
+{
+  "name": "gakushu-plus",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "scripts": {
+    "test": "echo no test",
+    "dev": "node server.js",
+    "start": "node api/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1"
+  }
 }
