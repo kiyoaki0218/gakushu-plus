@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gakushu Plus - 学習管理 & KCウォレット</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <!-- nacl libraries for browser signature generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tweetnacl-util@0.15.1/nacl-util.min.js"></script>
+  <!-- html5-qrcode for barcode scanning -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+  <!-- ログインモーダル -->
+  <div id="login-modal" class="modal">
+    <div class="modal-content">
+      <h2>Gakushu Plus ログイン</h2>
+      <p style="font-size:12px; margin-bottom:15px; color:var(--text-secondary);">
+        Fiction Money (KC) の鍵を使ってログインするか、非ログイン（ゲスト）アカウントで開始します。
+      </p>
+      
+      <div style="text-align: left; margin-bottom: 15px;">
+        <label for="login-seed" style="font-size: 11px; display: block; margin-bottom: 4px;">ウォレット秘密鍵 (シード Base64):</label>
+        <input type="text" id="login-seed" placeholder="秘密鍵を入力するか新規生成してください" style="width: 100%; margin-bottom: 10px;">
+        
+        <label for="login-username" style="font-size: 11px; display: block; margin-bottom: 4px;">ユーザー名 (新規登録時のみ有効・任意):</label>
+        <input type="text" id="login-username" placeholder="例: taro (未入力時は自動生成)" style="width: 100%;">
+      </div>
+
+      <div class="btn-group" style="display:flex; flex-direction:column; gap:8px;">
+        <button id="login-kc-btn" class="btn primary" style="width: 100%;">🔑 ウォレット鍵でログイン / 登録</button>
+        <button id="generate-login-seed-btn" class="btn secondary" style="width: 100%; font-size:12px;">🆕 新規ウォレット鍵を生成</button>
+        <button id="login-guest-btn" class="btn text" style="width: 100%; color: var(--text-secondary); text-decoration: underline;">鍵を使わずにゲストで始める</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 学習記録編集モーダル -->
+  <div id="edit-modal" class="modal hidden">
+    <div class="modal-content" style="text-align: left;">
+      <h2>学習記録の編集</h2>
+      <input type="hidden" id="edit-log-id">
+      
+      <div class="form-group">
+        <label for="edit-log-book">使用する参考書:</label>
+        <select id="edit-log-book">
+          <option value="">-- 参考書なし (その他) --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-log-subject">学習内容・メモ:</label>
+        <input type="text" id="edit-log-subject" placeholder="英語の長文読解、数学の青チャート等">
+      </div>
+      <div class="form-group">
+        <label for="edit-log-duration">時間 (分):</label>
+        <input type="number" id="edit-log-duration" min="1">
+      </div>
+      <div class="form-group">
+        <label for="edit-log-date">日付:</label>
+        <input type="text" id="edit-log-date" placeholder="YYYY-MM-DD">
+      </div>
+      <div class="btn-group">
+        <button id="edit-save-btn" class="btn primary">保存</button>
+        <button id="edit-cancel-btn" class="btn secondary">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- フォルダ作成・本移動モーダル -->
+  <div id="folder-modal" class="modal hidden">
+    <div class="modal-content" style="text-align: left;">
+      <h2 id="folder-modal-title">フォルダ管理</h2>
+      <div id="folder-create-section">
+        <div class="form-group">
+          <label for="new-folder-name">新規フォルダ名:</label>
+          <input type="text" id="new-folder-name" placeholder="英語、数学、受験対策など">
+        </div>
+        <button id="create-folder-btn" class="btn primary">フォルダ作成</button>
+      </div>
+      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+      <div id="folder-list-section">
+        <h3>作成済みのフォルダ</h3>
+        <ul id="modal-folder-list" class="modal-folder-list">
+          <!-- フォルダ一覧と削除ボタンが動的に挿入される -->
+        </ul>
+      </div>
+      <div class="btn-group" style="margin-top: 20px;">
+        <button id="close-folder-modal-btn" class="btn secondary">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 本のフォルダ移動モーダル -->
+  <div id="move-book-modal" class="modal hidden">
+    <div class="modal-content" style="text-align: left;">
+      <h2>参考書の移動</h2>
+      <input type="hidden" id="move-book-id">
+      <div class="form-group">
+        <label for="move-book-folder-select">移動先フォルダ:</label>
+        <select id="move-book-folder-select">
+          <option value="">-- 未分類 (フォルダなし) --</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button id="move-book-save-btn" class="btn primary">移動する</button>
+        <button id="move-book-cancel-btn" class="btn secondary">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- コメントモーダル -->
+  <div id="comments-modal" class="modal hidden">
+    <div class="modal-content" style="text-align: left;">
+      <h2>コメント一覧</h2>
+      <div id="comments-list-container" class="comments-list-container">
+        <!-- コメントが動的に挿入される -->
+      </div>
+      <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
+      <div class="form-group">
+        <label for="new-comment-text">コメントを追加:</label>
+        <textarea id="new-comment-text" placeholder="応援コメントなどを入力..." rows="2"></textarea>
+      </div>
+      <input type="hidden" id="comment-log-id">
+      <div class="btn-group">
+        <button id="submit-comment-btn" class="btn primary">送信</button>
+        <button id="close-comments-btn" class="btn secondary">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-container">
+      <div class="logo">Gakushu <span>Plus</span></div>
+      <div class="user-status">
+        <span id="header-username">ゲスト</span>
+        <span id="header-balance-badge" class="badge">0 KC</span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="main-nav">
+    <button class="nav-item active" data-tab="timer">タイマー</button>
+    <button class="nav-item" data-tab="books">本棚</button>
+    <button class="nav-item" data-tab="ranking">ランキング & 对戦</button>
+    <button class="nav-item" data-tab="wallet">ウォレット</button>
+  </nav>
+
+  <main class="container">
+    <!-- タイマー表示タブ -->
+    <section id="tab-timer" class="tab-content active">
+      <div class="grid">
+        <div class="card timer-card">
+          <h2>学習タイマー</h2>
+          
+          <div class="form-row" style="width: 100%; margin-bottom: 12px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+              <label for="timer-book">使用する参考書:</label>
+              <select id="timer-book">
+                <option value="">-- 参考書なし (その他) --</option>
+              </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+              <label for="timer-subject">学習内容・メモ:</label>
+              <input type="text" id="timer-subject" placeholder="学習内容を入力（例: ターゲット単語1-100）">
+            </div>
+          </div>
+
+          <div class="form-group" style="width: 100%; text-align: right; margin-bottom: 20px; margin-top: 8px;">
+            <button id="quick-register-trigger" class="btn secondary btn-sm">+ 参考書をクイックインポート</button>
+          </div>
+
+          <!-- クイックインポートボックス -->
+          <div id="quick-register-box" class="hidden" style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 15px; margin-bottom: 20px; background-color: var(--bg-primary);">
+            <h3 style="font-size: 13px; margin-bottom: 8px;">バーコード・ISBNから自動追加</h3>
+            <div class="inline-form" style="margin-bottom: 10px;">
+              <input type="text" id="quick-isbn-input" placeholder="ISBNコード (例: 9784798157573)" style="padding: 8px 10px; font-size: 12px;">
+              <button id="quick-isbn-import-btn" class="btn primary btn-sm">自動追加</button>
+            </div>
+            <div id="quick-barcode-reader" style="width: 100%; max-width: 250px; margin: 0 auto; border-radius: 4px; overflow: hidden; display: none;"></div>
+            <div class="btn-group" style="margin-top: 5px;">
+              <button id="quick-start-scan-btn" class="btn secondary btn-sm" style="font-size:11px; padding: 4px 8px;">カメラでスキャン</button>
+              <button id="quick-stop-scan-btn" class="btn secondary btn-sm hidden" style="font-size:11px; padding: 4px 8px;">停止</button>
+            </div>
+          </div>
+
+          <div class="timer-display">
+            <span id="timer-time">00:00:00</span>
+          </div>
+          <div class="timer-controls">
+            <button id="timer-start-btn" class="btn success">スタート</button>
+            <button id="timer-pause-btn" class="btn warning" disabled>一時停止</button>
+            <button id="timer-save-btn" class="btn primary" disabled>記録を保存</button>
+          </div>
+        </div>
+
+        <div class="card logs-card">
+          <h2>みんなの学習タイムライン</h2>
+          <div class="summary-stats">
+            <div class="stat-box">
+              <span class="stat-value" id="today-total-time">0分</span>
+              <span class="stat-label">今日の学習</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-value" id="week-total-time">0分</span>
+              <span class="stat-label">今週の学習</span>
+            </div>
+          </div>
+          <div id="study-logs-list" class="timeline-container">
+            <!-- タイムラインが動的に挿入される -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 本棚タブ -->
+    <section id="tab-books" class="tab-content">
+      <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h2>マイ本棚</h2>
+          <div class="btn-group">
+            <button id="manage-folders-trigger" class="btn secondary btn-sm">📁 フォルダ管理</button>
+            <button id="add-book-trigger" class="btn primary btn-sm">+ 手動で本を追加</button>
+          </div>
+        </div>
+        
+        <div id="add-book-form" class="inline-form hidden" style="margin-top: 15px;">
+          <input type="text" id="new-book-title" placeholder="参考書のタイトルを入力...">
+          <select id="new-book-folder-select" style="max-width: 150px; margin-right: 10px;">
+            <option value="">-- 未分類 --</option>
+          </select>
+          <button id="save-book-btn" class="btn success">追加</button>
+        </div>
+
+        <!-- フォルダごとの本の一覧 -->
+        <div id="books-shelf-container" style="margin-top: 20px;">
+          <!-- ここにフォルダコンテナおよび本が並ぶ -->
+        </div>
+      </div>
+
+      <!-- バーコードインポートセクション -->
+      <div class="card" style="margin-top: 24px;">
+        <h2>📷 バーコード（ISBN）から本棚に追加</h2>
+        <p class="subtitle">参考書のバーコード(ISBN)をカメラで読み取るか、手動でコードを入力してください。自動的に書影画像とタイトルを取得します。</p>
+        
+        <div class="form-group">
+          <div id="barcode-reader" style="width: 100%; max-width: 400px; margin: 0 auto; border-radius: 8px; overflow: hidden;"></div>
+        </div>
+        
+        <div class="inline-form">
+          <input type="text" id="isbn-input" placeholder="ISBNコードを入力 (例: 9784798157573)">
+          <select id="isbn-book-folder-select" style="max-width: 150px; margin-right: 10px;">
+            <option value="">-- 未分類 --</option>
+          </select>
+          <button id="isbn-import-btn" class="btn primary">インポート</button>
+        </div>
+        <div class="btn-group" style="margin-top: 10px;">
+          <button id="start-scan-btn" class="btn secondary">カメラを起動してスキャン</button>
+          <button id="stop-scan-btn" class="btn secondary hidden">スキャン停止</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ランキング & 対戦タブ -->
+    <section id="tab-ranking" class="tab-content">
+      <div class="grid">
+        <div class="card">
+          <h2>🏆 学習ランキング</h2>
+          <p class="subtitle">これまでの累計学習時間（秒）のランキングです</p>
+          <ol id="ranking-list" class="ranking-list">
+            <!-- ランキングが動的に挿入される -->
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>⚔️ 学習時間対戦 (Study Duel)</h2>
+          <p class="subtitle">フレンドとKCを賭けて学習時間（秒）で競い合います</p>
+          
+          <div class="duel-create-box">
+            <h3>対戦を申し込む</h3>
+            <div class="form-group">
+              <label for="duel-opponent">対戦相手:</label>
+              <select id="duel-opponent">
+                <!-- ユーザー一覧が動的に挿入される -->
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="duel-amount">賭け金 (KC):</label>
+                <input type="number" id="duel-amount" value="50" min="1">
+              </div>
+              <div class="form-group">
+                <label for="duel-duration">期間 (日):</label>
+                <input type="number" id="duel-duration" value="3" min="1">
+              </div>
+            </div>
+            <button id="create-duel-btn" class="btn danger">対戦を申請 (KCをデポジット)</button>
+          </div>
+
+          <div class="duel-list-box">
+            <h3>現在の対戦状況</h3>
+            <div id="duels-list" class="duels-list">
+              <!-- 対戦状況が動的に挿入される -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ウォレットタブ -->
+    <section id="tab-wallet" class="tab-content">
+      <div class="card">
+        <h2>💰 Fiction Money (KC) ウォレット設定</h2>
+        <p class="subtitle">Fiction Money（KC）ネットワークに接続して、賭け金のデポジットや勝敗時の報酬のやり取りを行います。</p>
+        
+        <div class="wallet-status-box">
+          <div class="status-row">
+            <span class="status-label">接続ステータス:</span>
+            <span id="wallet-connection-status" class="status-value offline">未接続</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">公開アドレス:</span>
+            <span id="wallet-address" class="status-value address-value">-</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">現在の残高:</span>
+            <span id="wallet-balance" class="status-value balance-value">0 KC</span>
+          </div>
+        </div>
+
+        <div class="wallet-actions">
+          <div id="wallet-setup-section">
+            <h3>ウォレットの作成 / インポート</h3>
+            <div class="form-group">
+              <label for="wallet-seed">秘密のシード (Base64形式):</label>
+              <input type="text" id="wallet-seed" placeholder="空のまま新規作成を押すと自動生成されます">
+            </div>
+            <div class="btn-group">
+              <button id="generate-wallet-btn" class="btn primary">新規ウォレット作成</button>
+              <button id="import-wallet-btn" class="btn secondary">インポートして接続</button>
+            </div>
+          </div>
+
+          <div id="wallet-register-section" class="hidden">
+            <h3>コインネットワークへ新規登録</h3>
+            <p class="desc-text">新しいアドレスでKCを受け取るためには、Fiction Moneyスマートコントラクトへ初回登録（ボーナスKCの受け取り）が必要です。</p>
+            <div class="form-group">
+              <label for="invite-code">招待コード:</label>
+              <input type="text" id="invite-code" value="kurekure2026">
+            </div>
+            <button id="register-kc-btn" class="btn success">ネットワークに登録してボーナスをもらう</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
