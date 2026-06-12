@@ -6,7 +6,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://iqiizntthptcgnbxglgg.supabase.co';
+let SUPABASE_URL = process.env.SUPABASE_URL || 'https://iqiizntthptcgnbxglgg.supabase.co';
+// 末尾に /rest/v1/ や /rest/v1 が付いていた場合は自動で削除する
+if (SUPABASE_URL.endsWith('/rest/v1/')) {
+  SUPABASE_URL = SUPABASE_URL.slice(0, -9);
+} else if (SUPABASE_URL.endsWith('/rest/v1')) {
+  SUPABASE_URL = SUPABASE_URL.slice(0, -8);
+}
+if (SUPABASE_URL.endsWith('/')) {
+  SUPABASE_URL = SUPABASE_URL.slice(0, -1);
+}
+
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaWl6bnR0aHB0Y2duYnhnbGdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNjE3OTksImV4cCI6MjA5NjgzNzc5OX0.mhH3Py3diW7SdCsK4JlyYbnTLvrKjA2QxQ91AfTRtYQ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
