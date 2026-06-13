@@ -266,7 +266,7 @@ function setupTimer() {
       });
       const data = await res.json();
       if (data.success) {
-        alert(`${subject}縺ｮ蟄ｦ鄙呈凾髢・${formatTime(secondsElapsed)} 繧定ｨ倬鹸縺励∪縺励◆・～);
+        alert(`${subject}の学習時間 ${formatTime(secondsElapsed)} を記録しました！`);
         secondsElapsed = 0;
         timeDisplay.textContent = '00:00:00';
         saveBtn.disabled = true;
@@ -291,7 +291,7 @@ function formatTime(totalSeconds) {
   ].join(':');
 }
 
-// 繧ｿ繧､繝繝ｩ繧､繝ｳ縺ｨ蟄ｦ鄙偵し繝槭Μ繝ｼ縺ｮ繝ｭ繝ｼ繝・async function loadStudyLogs() {
+async function loadStudyLogs() {
   if (!currentUser) return;
   
   // 1. 繧ｵ繝槭Μ繝ｼ(閾ｪ蛻・・霄ｫ縺ｮ蜍牙ｼｷ譎る俣)
@@ -314,8 +314,8 @@ function formatTime(totalSeconds) {
       }
     });
 
-    document.getElementById('today-total-time').textContent = `${Math.round(todaySec / 60)}蛻・;
-    document.getElementById('week-total-time').textContent = `${Math.round(weekSec / 60)}蛻・;
+    document.getElementById('today-total-time').textContent = `${Math.round(todaySec / 60)}分`;
+    document.getElementById('week-total-time').textContent = `${Math.round(weekSec / 60)}分`;
   } catch (e) {
     console.error('蟄ｦ鄙偵し繝槭Μ繝ｼ繝ｭ繝ｼ繝峨お繝ｩ繝ｼ:', e);
   }
@@ -395,7 +395,7 @@ function formatTime(totalSeconds) {
 
 // 蜑企勁讖溯・
 async function deleteStudyLog(id) {
-  if (!confirm('譛ｬ蠖薙↓縺薙・險倬鹸繧貞炎髯､縺励∪縺吶°・・)) return;
+  if (!confirm('本当にこの記録を削除しますか？')) return;
   try {
     const res = await fetch(`${API_URL}/study-log/${id}`, { method: 'DELETE' });
     const data = await res.json();
@@ -433,7 +433,7 @@ async function toggleComments(id) {
   }
 }
 
-// 繧ｳ繝｡繝ｳ繝井ｸ隕ｧ縺ｮ繝ｭ繝ｼ繝・async function loadComments(id) {
+async function loadComments(id) {
   try {
     const res = await fetch(`${API_URL}/study-log/${id}/comments`);
     const comments = await res.json();
@@ -645,7 +645,7 @@ async function toggleSecret(bookId, isSecret, price) {
     });
     const data = await res.json();
     if (data.success) {
-      alert(isSecret ? '蜿り・嶌繧偵す繝ｼ繧ｯ繝ｬ繝・ヨ蛹悶＠縺ｾ縺励◆縲・ : '繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ險ｭ螳壹ｒ隗｣髯､縺励∪縺励◆縲・);
+      alert(isSecret ? '参考書をシークレット化しました。' : 'シークレット設定を解除しました。');
       loadBooks();
     }
   } catch (e) {
@@ -656,19 +656,19 @@ async function toggleSecret(bookId, isSecret, price) {
 // 繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ蜿り・嶌縺ｮ雉ｼ蜈･
 async function purchaseBook(bookId, ownerAddress, price) {
   if (!currentWallet) {
-    alert('雉ｼ蜈･縺ｫ縺ｯ繧ｦ繧ｩ繝ｬ繝・ヨ騾｣謳ｺ縺悟ｿ・ｦ√〒縺吶ゅ後え繧ｩ繝ｬ繝・ヨ騾｣謳ｺ縲阪ち繝悶〒險ｭ螳壹＠縺ｦ縺上□縺輔＞縲・);
+    alert('購入にはウォレット連携が必要です。「ウォレット連携」タブで設定してください。');
     return;
   }
   if (currentWallet.balance < price) {
-    alert('KC谿矩ｫ倥′荳崎ｶｳ縺励※縺・∪縺吶・);
+    alert('KC残高が不足しています。');
     return;
   }
   if (!ownerAddress || ownerAddress === 'null') {
-    alert('謇譛芽・・繧ｦ繧ｩ繝ｬ繝・ヨ繧｢繝峨Ξ繧ｹ縺檎匳骭ｲ縺輔ｌ縺ｦ縺・∪縺帙ｓ縲・);
+    alert('所有者のウォレットアドレスが登録されていません。');
     return;
   }
 
-  const confirmPay = confirm(`${price} KC 繧呈髪謇輔▲縺ｦ縺薙・蜿り・嶌繧帝夢隕ｧ縺励∪縺吶°・歔);
+  const confirmPay = confirm(`${price} KC を支払ってこの参考書を閲覧しますか？`);
   if (!confirmPay) return;
 
   try {
@@ -712,7 +712,7 @@ async function purchaseBook(bookId, ownerAddress, price) {
     const purchaseData = await purchaseRes.json();
 
     if (purchaseData.success) {
-      alert('雉ｼ蜈･縺悟ｮ御ｺ・＠縺ｾ縺励◆・・);
+      alert('購入が完了しました！');
       loadBooks();
       refreshWalletInfo();
     } else {
@@ -785,21 +785,21 @@ function setupDuelEvents() {
     const duration = parseInt(document.getElementById('duel-duration').value);
 
     if (!opponentId) {
-      alert('蟇ｾ謌ｦ逶ｸ謇九ｒ驕ｸ謚槭＠縺ｦ縺上□縺輔＞縲・);
+      alert('対戦相手を選択してください。');
       return;
     }
 
     if (!currentWallet) {
-      alert('蟇ｾ豎ｺ縺ｮ菴懈・縺ｫ縺ｯ繧ｦ繧ｩ繝ｬ繝・ヨ騾｣謳ｺ縺悟ｿ・ｦ√〒縺吶・);
+      alert('対決の作成にはウォレット連携が必要です。');
       return;
     }
 
     if (currentWallet.balance < amount) {
-      alert('谿矩ｫ倥′荳崎ｶｳ縺励※縺・∪縺吶・);
+      alert('残高が不足しています。');
       return;
     }
 
-    const confirmDuel = confirm(`譛ｬ蠖薙↓ ${amount} KC 繧偵・繝ｼ繝ｫ縺励※蟇ｾ豎ｺ繧堤筏隲九＠縺ｾ縺吶°・歔);
+    const confirmDuel = confirm(`本当に ${amount} KC をプールして対決を申請しますか？`);
     if (!confirmDuel) return;
 
     try {
@@ -846,7 +846,7 @@ function setupDuelEvents() {
       const duelData = await duelRes.json();
 
       if (duelData.success) {
-        alert('蟇ｾ豎ｺ縺ｮ逕ｳ隲九′螳御ｺ・＠縺ｾ縺励◆・・);
+        alert('対決の申請が完了しました！');
         loadRankingAndDuels();
         refreshWalletInfo();
       }
@@ -941,7 +941,7 @@ async function loadRankingAndDuels() {
           <span>笞費ｸ・${duel.challenger_name} VS ${duel.opponent_name} [${statusText}]</span>
           <span>雉ｭ縺鷹≡: ${duel.amount_kc} KC</span>
         </div>
-        <div>譛滄俣: ${duel.duration_days}譌･髢・(髢句ｧ・ ${duel.start_date || '譛ｪ髢句ｧ・})</div>
+        <div>期間: ${duel.duration_days}日間 (開始: ${duel.start_date || '未開始'})</div>
         ${statsHtml}
         ${actionHtml}
       `;
@@ -954,10 +954,10 @@ async function loadRankingAndDuels() {
 
 function getStatusJp(status) {
   switch (status) {
-    case 'pending': return '逕ｳ隲倶ｸｭ';
-    case 'active': return '蟇ｾ豎ｺ荳ｭ';
-    case 'completed': return '蟇ｾ豎ｺ邨ゆｺ・;
-    case 'rejected': return '諡貞凄縺輔ｌ縺ｾ縺励◆';
+    case 'pending': return '申請中';
+    case 'active': return '対決中';
+    case 'completed': return '対決終了';
+    case 'rejected': return '拒否されました';
     default: return status;
   }
 }
@@ -965,15 +965,15 @@ function getStatusJp(status) {
 async function respondDuel(duelId, accept, amount) {
   if (accept) {
     if (!currentWallet) {
-      alert('蟇ｾ豎ｺ繧貞女縺代ｋ縺ｫ縺ｯ繧ｦ繧ｩ繝ｬ繝・ヨ騾｣謳ｺ縺悟ｿ・ｦ√〒縺吶・);
+      alert('対決を受けるにはウォレット連携が必要です。');
       return;
     }
     if (currentWallet.balance < amount) {
-      alert('KC谿矩ｫ倥′荳崎ｶｳ縺励※縺・∪縺吶・);
+      alert('KC残高が不足しています。');
       return;
     }
 
-    const confirmAccept = confirm(`譛ｬ蠖薙↓ ${amount} KC 繧偵・繝ｼ繝ｫ縺励※蟇ｾ豎ｺ繧帝幕蟋九＠縺ｾ縺吶°・歔);
+    const confirmAccept = confirm(`本当に ${amount} KC をプールして対決を開始しますか？`);
     if (!confirmAccept) return;
 
     try {
@@ -1013,7 +1013,7 @@ async function respondDuel(duelId, accept, amount) {
       });
       const data = await res.json();
       if (data.success) {
-        alert('蟇ｾ豎ｺ繧帝幕蟋九＠縺ｾ縺励◆・・);
+        alert('対決を開始しました！');
         loadRankingAndDuels();
         refreshWalletInfo();
       }
@@ -1029,7 +1029,7 @@ async function respondDuel(duelId, accept, amount) {
       });
       const data = await res.json();
       if (data.success) {
-        alert('蟇ｾ豎ｺ繧呈拠蜷ｦ縺励∪縺励◆縲・);
+        alert('対決を拒否しました。');
         loadRankingAndDuels();
       }
     } catch (e) {
@@ -1048,9 +1048,9 @@ async function completeDuel(duelId) {
     const data = await res.json();
     if (data.success) {
       if (data.winner_id) {
-        alert(`蟇ｾ豎ｺ螳御ｺ・ｼ・蜍晁・・繝ｦ繝ｼ繧ｶ繝ｼID ${data.winner_id} 縺ｧ縺吶Ａ);
+        alert(`対決完了！勝者はユーザーID ${data.winner_id} です。`);
       } else {
-        alert('蟇ｾ豎ｺ螳御ｺ・ｼ・蠑輔″蛻・￠縺ｧ縺励◆縲・);
+        alert('対決完了！引き分けでした。');
       }
       loadRankingAndDuels();
       refreshWalletInfo();
@@ -1072,7 +1072,7 @@ function setupWalletEvents() {
   document.getElementById('import-wallet-btn').addEventListener('click', () => {
     const seed = document.getElementById('wallet-seed').value.trim();
     if (!seed) {
-      alert('遘伜ｯ・嵯繧貞・蜉帙＠縺ｦ縺上□縺輔＞縲・);
+      alert('秘密鍵を入力してください。');
       return;
     }
     importWalletFromSeed(seed);
@@ -1159,7 +1159,7 @@ async function refreshWalletInfo() {
       currentWallet.balance = data.balance;
       currentWallet.nonce = data.nonce;
       
-      document.getElementById('wallet-connection-status').textContent = '謗･邯壼ｮ御ｺ・;
+      document.getElementById('wallet-connection-status').textContent = '接続完了';
       document.getElementById('wallet-connection-status').className = 'status-value online';
       document.getElementById('wallet-balance').textContent = `${data.balance} KC`;
       document.getElementById('header-balance-badge').textContent = `${data.balance} KC`;
@@ -1294,7 +1294,7 @@ function setupBarcodeEvents() {
 async function importBookByIsbn(isbn, selectAutomatically = false) {
   isbn = isbn.replace(/-/g, '').trim();
   if (!isbn || isbn.length !== 13) {
-    alert('豁｣縺励＞13譯√・ISBN繧ｳ繝ｼ繝峨ｒ蜈･蜉帙＠縺ｦ縺上□縺輔＞縲・);
+    alert('正しい13桁のISBNコードを入力してください。');
     return false;
   }
 
@@ -1315,7 +1315,7 @@ async function importBookByIsbn(isbn, selectAutomatically = false) {
       const regData = await regRes.json();
       
       if (regData.success) {
-        alert(`蜿り・嶌縲・{title}縲阪ｒ閾ｪ蜍輔う繝ｳ繝昴・繝医＠縺ｾ縺励◆・～);
+        alert(`参考書「${title}」を自動インポートしました！`);
         document.getElementById('isbn-input').value = '';
         
         await loadBooks();
@@ -1334,7 +1334,7 @@ async function importBookByIsbn(isbn, selectAutomatically = false) {
         alert('蜿り・嶌縺ｮ逋ｻ骭ｲ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + regData.error);
       }
     } else {
-      alert('譖ｸ邀肴ュ蝣ｱ縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縺ｧ縺励◆縲・SBN繧ｳ繝ｼ繝峨ｒ遒ｺ隱阪＠縺ｦ縺上□縺輔＞縲・);
+      alert('書籍情報が見つかりませんでした。ISBNコードを確認してください。');
     }
   } catch (e) {
     alert('譖ｸ邀肴ュ蝣ｱ縺ｮ蜿門ｾ嶺ｸｭ縺ｫ騾壻ｿ｡繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + e.message);
@@ -1370,7 +1370,7 @@ function setupFolderEvents() {
       const name = nameInput ? nameInput.value.trim() : '';
       if (!name) { alert('フォルダ名を入力してください'); return; }
       try {
-        const res = await fetch(${API_URL}/folders, {
+        const res = await fetch(`${API_URL}/folders`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: currentUser.id, name })
