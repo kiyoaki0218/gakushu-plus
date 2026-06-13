@@ -1138,7 +1138,10 @@ async function importWalletFromSeed(seedBase64) {
 
     refreshWalletInfo();
   } catch (e) {
-    alert('遘伜ｯ・嵯縺ｮ繧､繝ｳ繝昴・繝医↓螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
+    alert('秘密鍵のインポートに失敗しました: ' + e.message);
+    localStorage.removeItem('gakushu_plus_seed');
+    deleteCookie('gakushu_plus_seed');
+    document.getElementById('login-modal').classList.remove('hidden');
   }
 }
 
