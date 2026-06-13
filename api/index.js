@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../public')));
 
 let SUPABASE_URL = process.env.SUPABASE_URL || 'https://iqiizntthptcgnbxglgg.supabase.co';
 // 末尾に /rest/v1/ や /rest/v1 が付いていた場合は自動で削除する
@@ -269,6 +271,10 @@ app.post('/api/duels/complete', asyncHandler(async (req, res) => {
 app.use((err, req, res, next) => {
   console.error("Unhandled Server Error:", err);
   res.status(500).json({ error: err.message || "Internal Server Error" });
+});
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 module.exports = app;
