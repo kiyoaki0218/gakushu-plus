@@ -1,4 +1,4 @@
-﻿const API_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3001/api' : '/api';
+const API_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3001/api' : '/api';
 const KC_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ? 'http://localhost:3000/api' : 'https://kc-server.vercel.app/api';
 
 let currentUser = null;
