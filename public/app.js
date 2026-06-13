@@ -294,7 +294,7 @@ function formatTime(totalSeconds) {
 async function loadStudyLogs() {
   if (!currentUser) return;
   
-  // 1. 繧ｵ繝槭Μ繝ｼ(閾ｪ蛻・・霄ｫ縺ｮ蜍牙ｼｷ譎る俣)
+  // 1. 繧ｵ繝槭Μ繝ｼ(自分自身の勉強時間)
   try {
     const res = await fetch(`${API_URL}/study-logs/${currentUser.id}`);
     const logs = await res.json();
@@ -338,7 +338,7 @@ async function loadStudyLogs() {
       
       const isOwner = log.user_id === currentUser.id;
       const coverHtml = log.book_cover 
-        ? `<img src="${escapeHtml(log.book_cover)}" class="timeline-book-cover" alt="譖ｸ蠖ｱ">` 
+        ? `<img src="${escapeHtml(log.book_cover)}" class="timeline-book-cover" alt="書影">` 
         : `<div class="timeline-book-cover" style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text-secondary);">答</div>`;
       
       const bookTitleHtml = log.book_title 
@@ -348,8 +348,8 @@ async function loadStudyLogs() {
       const editDeleteButtons = isOwner 
         ? `
           <div class="timeline-header-right">
-            <button class="btn secondary btn-sm" style="padding:2px 6px; font-size:11px;" onclick="openEditModal(${log.id}, '${escapeHtml(log.subject)}', ${log.book_id || 'null'}, ${log.duration_seconds}, '${log.date}')">邱ｨ髮・/button>
-            <button class="btn danger btn-sm" style="padding:2px 6px; font-size:11px;" onclick="deleteStudyLog(${log.id})">蜑企勁</button>
+            <button class="btn secondary btn-sm" style="padding:2px 6px; font-size:11px;" onclick="openEditModal(${log.id}, '${escapeHtml(log.subject)}', ${log.book_id || 'null'}, ${log.duration_seconds}, '${log.date}')">編集/button>
+            <button class="btn danger btn-sm" style="padding:2px 6px; font-size:11px;" onclick="deleteStudyLog(${log.id})">削除</button>
           </div>
         ` 
         : '';
@@ -374,15 +374,15 @@ async function loadStudyLogs() {
             笶､・・<span id="like-count-${log.id}">${log.likes_count}</span> 縺・＞縺ｭ
           </button>
           <button class="timeline-action-btn" onclick="toggleComments(${log.id})">
-            町 <span id="comment-count-${log.id}">${log.comments_count}</span> 繧ｳ繝｡繝ｳ繝・          </button>
+            町 <span id="comment-count-${log.id}">${log.comments_count}</span> コメント          </button>
         </div>
         <div id="comments-area-${log.id}" class="comments-section hidden">
           <ul id="comments-list-${log.id}" class="comments-list">
-            <!-- 繧ｳ繝｡繝ｳ繝医′蜍慕噪縺ｫ謖ｿ蜈･縺輔ｌ縺ｾ縺・-->
+            <!-- コメントが動的に挿入されます-->
           </ul>
           <div class="comment-input-form">
-            <input type="text" id="comment-input-${log.id}" placeholder="繧ｳ繝｡繝ｳ繝医ｒ蜈･蜉・..">
-            <button class="btn primary btn-sm" onclick="postComment(${log.id})">騾∽ｿ｡</button>
+            <input type="text" id="comment-input-${log.id}" placeholder="コメントを入力...">
+            <button class="btn primary btn-sm" onclick="postComment(${log.id})">送信</button>
           </div>
         </div>
       `;
@@ -393,7 +393,7 @@ async function loadStudyLogs() {
   }
 }
 
-// 蜑企勁讖溯・
+// 削除讖溯・
 async function deleteStudyLog(id) {
   if (!confirm('本当にこの記録を削除しますか？')) return;
   try {
@@ -403,7 +403,7 @@ async function deleteStudyLog(id) {
       loadStudyLogs();
     }
   } catch (e) {
-    alert('蜑企勁縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
+    alert('削除縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
   }
 }
 
@@ -533,7 +533,7 @@ async function loadBooks() {
       
       let coverHtml = '';
       if (book.cover_url) {
-        coverHtml = `<img src="${escapeHtml(book.cover_url)}" class="book-cover-img ${isBlur ? 'secret-blurred' : ''}" alt="譖ｸ蠖ｱ">`;
+        coverHtml = `<img src="${escapeHtml(book.cover_url)}" class="book-cover-img ${isBlur ? 'secret-blurred' : ''}" alt="書影">`;
       } else {
         coverHtml = `<div class="book-cover-img ${isBlur ? 'secret-blurred' : ''}" style="display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--text-secondary);">答</div>`;
       }
@@ -546,7 +546,7 @@ async function loadBooks() {
               <div class="progress-bar-fill" style="width: ${book.progress_percent}%"></div>
             </div>
             <div class="progress-text">
-              <span>騾ｲ謐礼紫</span>
+              <span>進捗率</span>
               <span>${book.progress_percent}%</span>
             </div>
           </div>
@@ -562,7 +562,7 @@ async function loadBooks() {
               <input type="range" min="0" max="100" value="${book.progress_percent}" onchange="updateProgress(${book.id}, this.value)" style="width: 100%;">
             </div>
             <div class="secret-setting-box">
-              <label>繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ (KC雋ｩ螢ｲ):</label>
+              <label>シークレット (KC販売):</label>
               <input type="checkbox" ${book.is_secret ? 'checked' : ''} onchange="toggleSecret(${book.id}, this.checked, document.getElementById('price-${book.id}').value)">
               <input type="number" id="price-${book.id}" value="${book.price_kc || 10}" min="1" style="width:50px;"> KC
             </div>
@@ -586,9 +586,9 @@ async function loadBooks() {
         const overlay = document.createElement('div');
         overlay.className = 'secret-lock-overlay';
         overlay.innerHTML = `
-          <h3>白 繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ</h3>
+          <h3>白 シークレット</h3>
           <p>騾ｲ謐励ｒ髢ｲ隕ｧ縺吶ｋ縺ｫ縺ｯ <strong>${book.price_kc} KC</strong> 繧呈髪謇輔≧蠢・ｦ√′縺ゅｊ縺ｾ縺吶・/p>
-          <button class="btn primary btn-sm" onclick="purchaseBook(${book.id}, '${book.owner_kc}', ${book.price_kc})">雉ｼ蜈･</button>
+          <button class="btn primary btn-sm" onclick="purchaseBook(${book.id}, '${book.owner_kc}', ${book.price_kc})">購入･</button>
         `;
         card.appendChild(overlay);
       }
@@ -649,11 +649,11 @@ async function toggleSecret(bookId, isSecret, price) {
       loadBooks();
     }
   } catch (e) {
-    alert('繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ險ｭ螳壹お繝ｩ繝ｼ: ' + e.message);
+    alert('シークレット設定壹お繝ｩ繝ｼ: ' + e.message);
   }
 }
 
-// 繧ｷ繝ｼ繧ｯ繝ｬ繝・ヨ蜿り・嶌縺ｮ雉ｼ蜈･
+// シークレット蜿り・嶌縺ｮ購入･
 async function purchaseBook(bookId, ownerAddress, price) {
   if (!currentWallet) {
     alert('購入にはウォレット連携が必要です。「ウォレット連携」タブで設定してください。');
@@ -694,7 +694,7 @@ async function purchaseBook(bookId, ownerAddress, price) {
     const sendData = await sendRes.json();
 
     if (!sendData.success) {
-      alert('騾・≡縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+      alert('送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
       return;
     }
 
@@ -716,14 +716,14 @@ async function purchaseBook(bookId, ownerAddress, price) {
       loadBooks();
       refreshWalletInfo();
     } else {
-      alert('雉ｼ蜈･險倬鹸縺ｮ菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + purchaseData.error);
+      alert('購入･險倬鹸縺ｮ菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + purchaseData.error);
     }
   } catch (e) {
-    alert('雉ｼ蜈･蜃ｦ逅・ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + e.message);
+    alert('購入･蜃ｦ逅・ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + e.message);
   }
 }
 
-// --- 邱ｨ髮・Δ繝ｼ繝繝ｫ ---
+// --- 編集Δ繝ｼ繝繝ｫ ---
 function setupEditModalEvents() {
   const modal = document.getElementById('edit-modal');
   const cancelBtn = document.getElementById('edit-cancel-btn');
@@ -763,7 +763,7 @@ function setupEditModalEvents() {
         loadStudyLogs();
       }
     } catch (e) {
-      alert('邱ｨ髮・・菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
+      alert('編集・菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
     }
   });
 }
@@ -777,7 +777,7 @@ window.openEditModal = function(id, subject, bookId, durationSeconds, date) {
   document.getElementById('edit-modal').classList.remove('hidden');
 };
 
-// --- 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ & 蟇ｾ豎ｺ讖溯・ ---
+// --- 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ & 対決讖溯・ ---
 function setupDuelEvents() {
   document.getElementById('create-duel-btn').addEventListener('click', async () => {
     const opponentId = document.getElementById('duel-opponent').value;
@@ -826,7 +826,7 @@ function setupDuelEvents() {
       const sendData = await sendRes.json();
 
       if (!sendData.success) {
-        alert('繝励・繝ｫ繝・・繧ｸ繝・ヨ縺ｮ騾・≡縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+        alert('プール繝・・繧ｸ繝・ヨ縺ｮ送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
         return;
       }
 
@@ -851,7 +851,7 @@ function setupDuelEvents() {
         refreshWalletInfo();
       }
     } catch (e) {
-      alert('蟇ｾ豎ｺ逕ｳ隲九お繝ｩ繝ｼ: ' + e.message);
+      alert('対決逕ｳ隲九お繝ｩ繝ｼ: ' + e.message);
     }
   });
 }
@@ -878,7 +878,7 @@ async function loadRankingAndDuels() {
     const res = await fetch(`${API_URL}/users`);
     const users = await res.json();
     const select = document.getElementById('duel-opponent');
-    select.innerHTML = '<option value="">-- 蟇ｾ謌ｦ逶ｸ謇九ｒ驕ｸ謚・--</option>';
+    select.innerHTML = '<option value="">-- 対戦逶ｸ謇九ｒ選択・--</option>';
 
     users.forEach(user => {
       if (user.id !== currentUser.id) {
@@ -899,7 +899,7 @@ async function loadRankingAndDuels() {
     list.innerHTML = '';
 
     if (duels.length === 0) {
-      list.innerHTML = '<div class="empty-item">迴ｾ蝨ｨ騾ｲ陦御ｸｭ縺ｮ蟇ｾ豎ｺ縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・/div>';
+      list.innerHTML = '<div class="empty-item">迴ｾ蝨ｨ騾ｲ陦御ｸｭ縺ｮ対決縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲・/div>';
       return;
     }
 
@@ -924,14 +924,14 @@ async function loadRankingAndDuels() {
       if (duel.status === 'pending' && !isChallenger) {
         actionHtml = `
           <div class="duel-actions">
-            <button class="btn success btn-sm" onclick="respondDuel(${duel.id}, true, ${duel.amount_kc})">蜿励￠縺ｦ遶九▽ (繝・・繧ｸ繝・ヨ)</button>
-            <button class="btn secondary btn-sm" onclick="respondDuel(${duel.id}, false, 0)">諡貞凄縺吶ｋ</button>
+            <button class="btn success btn-sm" onclick="respondDuel(${duel.id}, true, ${duel.amount_kc})">受けて立つ (繝・・繧ｸ繝・ヨ)</button>
+            <button class="btn secondary btn-sm" onclick="respondDuel(${duel.id}, false, 0)">拒否する</button>
           </div>
         `;
       } else if (duel.status === 'active') {
         actionHtml = `
           <div class="duel-actions">
-            <button class="btn danger btn-sm" onclick="completeDuel(${duel.id})">邨先棡蛻､螳壹・螳御ｺ・☆繧・/button>
+            <button class="btn danger btn-sm" onclick="completeDuel(${duel.id})">結果蛻､螳壹・螳御ｺ・☆繧・/button>
           </div>
         `;
       }
@@ -948,7 +948,7 @@ async function loadRankingAndDuels() {
       list.appendChild(div);
     });
   } catch (e) {
-    console.error('蟇ｾ豎ｺ繝ｪ繧ｹ繝郁ｪｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ:', e);
+    console.error('対決繝ｪ繧ｹ繝郁ｪｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ:', e);
   }
 }
 
@@ -1000,7 +1000,7 @@ async function respondDuel(duelId, accept, amount) {
       const sendData = await sendRes.json();
 
       if (!sendData.success) {
-        alert('繝・・繧ｸ繝・ヨ縺ｮ騾・≡縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+        alert('繝・・繧ｸ繝・ヨ縺ｮ送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
         return;
       }
 
@@ -1056,11 +1056,11 @@ async function completeDuel(duelId) {
       refreshWalletInfo();
     }
   } catch (e) {
-    alert('蟇ｾ豎ｺ縺ｮ螳御ｺ・・逅・お繝ｩ繝ｼ: ' + e.message);
+    alert('対決縺ｮ螳御ｺ・・逅・お繝ｩ繝ｼ: ' + e.message);
   }
 }
 
-// --- 繧ｦ繧ｩ繝ｬ繝・ヨ險ｭ螳・---
+// --- ウォレット設定・---
 function setupWalletEvents() {
   document.getElementById('generate-wallet-btn').addEventListener('click', () => {
     const keyPair = window.nacl.sign.keyPair();
@@ -1159,7 +1159,7 @@ async function refreshWalletInfo() {
   try {
     const res = await fetch(`${KC_URL}/balance/${currentWallet.address}`);
     if (res.status === 404) {
-      document.getElementById('wallet-connection-status').textContent = '譛ｪ逋ｻ骭ｲ (繧｢繝峨Ξ繧ｹ縺ｯ逕滓・貂医∩)';
+      document.getElementById('wallet-connection-status').textContent = '未登録 (アドレス生成済み)ｯ逕滓・貂医∩)';
       document.getElementById('wallet-connection-status').className = 'status-value offline';
       document.getElementById('wallet-balance').textContent = '0 KC';
       document.getElementById('header-balance-badge').textContent = '0 KC';
@@ -1176,7 +1176,7 @@ async function refreshWalletInfo() {
       document.getElementById('header-balance-badge').textContent = `${data.balance} KC`;
     }
   } catch (e) {
-    document.getElementById('wallet-connection-status').textContent = '繧ｪ繝輔Λ繧､繝ｳ (Fiction Money譛ｪ襍ｷ蜍・';
+    document.getElementById('wallet-connection-status').textContent = 'オフライン (Fiction Money未起動)';
     document.getElementById('wallet-connection-status').className = 'status-value offline';
   }
 }
