@@ -1107,7 +1107,15 @@ function setupWalletEvents() {
 async function importWalletFromSeed(seedBase64) {
   try {
     const seedBytes = window.nacl.util.decodeBase64(seedBase64);
-    const keyPair = window.nacl.sign.keyPair.fromSeed(seedBytes);
+    let keyPair;
+    if (seedBytes.length === 64) {
+      keyPair = window.nacl.sign.keyPair.fromSecretKey(seedBytes);
+    } else if (seedBytes.length === 32) {
+      keyPair = window.nacl.sign.keyPair.fromSeed(seedBytes);
+    } else {
+      throw new Error("鍵のサイズが正しくありません (32バイトまたは64バイトである必要があります)");
+    }
+
     const publicKeyBase64 = window.nacl.util.encodeBase64(keyPair.publicKey);
     
     const hashBuffer = await crypto.subtle.digest('SHA-256', keyPair.publicKey);
