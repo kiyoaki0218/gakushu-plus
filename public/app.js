@@ -219,7 +219,7 @@ async function loadUserData() {
 }
 
 // ===== 以下: 全機能実装 =====
-// --- 繧ｿ繧､繝槭・讖溯・ ---
+// --- タイマー機能 ---
 function setupTimer() {
   const timeDisplay = document.getElementById('timer-time');
   const startBtn = document.getElementById('timer-start-btn');
@@ -272,7 +272,7 @@ function setupTimer() {
         saveBtn.disabled = true;
         loadStudyLogs();
       } else {
-        alert('菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + data.error);
+        alert('保存に失敗しました: ' + data.error);
       }
     } catch (e) {
       alert('菫晏ｭ倅ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + e.message);
@@ -294,7 +294,7 @@ function formatTime(totalSeconds) {
 async function loadStudyLogs() {
   if (!currentUser) return;
   
-  // 1. 繧ｵ繝槭Μ繝ｼ(自分自身の勉強時間)
+  // 1. サマリー(自分自身の勉強時間)
   try {
     const res = await fetch(`${API_URL}/study-logs/${currentUser.id}`);
     const logs = await res.json();
@@ -317,7 +317,7 @@ async function loadStudyLogs() {
     document.getElementById('today-total-time').textContent = `${Math.round(todaySec / 60)}分`;
     document.getElementById('week-total-time').textContent = `${Math.round(weekSec / 60)}分`;
   } catch (e) {
-    console.error('蟄ｦ鄙偵し繝槭Μ繝ｼ繝ｭ繝ｼ繝峨お繝ｩ繝ｼ:', e);
+    console.error('学習サマリーロードエラー:', e);
   }
 
   // 2. 繧ｿ繧､繝繝ｩ繧､繝ｳ陦ｨ遉ｺ (SNS讖溯・繧貞性繧)
@@ -348,7 +348,7 @@ async function loadStudyLogs() {
       const editDeleteButtons = isOwner 
         ? `
           <div class="timeline-header-right">
-            <button class="btn secondary btn-sm" style="padding:2px 6px; font-size:11px;" onclick="openEditModal(${log.id}, '${escapeHtml(log.subject)}', ${log.book_id || 'null'}, ${log.duration_seconds}, '${log.date}')">編集/button>
+            <button class="btn secondary btn-sm" style="padding:2px 6px; font-size:11px;" onclick="openEditModal(${log.id}, '${escapeHtml(log.subject)}', ${log.book_id || 'null'}, ${log.duration_seconds}, '${log.date}')">編集</button>
             <button class="btn danger btn-sm" style="padding:2px 6px; font-size:11px;" onclick="deleteStudyLog(${log.id})">削除</button>
           </div>
         ` 
@@ -393,7 +393,7 @@ async function loadStudyLogs() {
   }
 }
 
-// 削除讖溯・
+// 削除機能
 async function deleteStudyLog(id) {
   if (!confirm('本当にこの記録を削除しますか？')) return;
   try {
@@ -403,11 +403,11 @@ async function deleteStudyLog(id) {
       loadStudyLogs();
     }
   } catch (e) {
-    alert('削除縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + e.message);
+    alert('削除に失敗しました: ' + e.message);
   }
 }
 
-// 縺・＞縺ｭ繝医げ繝ｫ
+// いいねトグル
 async function toggleLike(id) {
   try {
     const res = await fetch(`${API_URL}/study-log/${id}/like`, {
@@ -420,11 +420,11 @@ async function toggleLike(id) {
       loadStudyLogs();
     }
   } catch (e) {
-    console.error('縺・＞縺ｭ繧ｨ繝ｩ繝ｼ:', e);
+    console.error('いいねエラー:', e);
   }
 }
 
-// 繧ｳ繝｡繝ｳ繝域ｬ・・髢矩哩
+// コメント欄の開閉
 async function toggleComments(id) {
   const area = document.getElementById(`comments-area-${id}`);
   area.classList.toggle('hidden');
@@ -441,7 +441,7 @@ async function loadComments(id) {
     list.innerHTML = '';
 
     if (comments.length === 0) {
-      list.innerHTML = '<li class="empty-item" style="color:var(--text-secondary); text-align:center;">繧ｳ繝｡繝ｳ繝医・縺ｾ縺縺ゅｊ縺ｾ縺帙ｓ縲・/li>';
+      list.innerHTML = '<li class="empty-item" style="color:var(--text-secondary); text-align:center;">コメントはまだありません。</li>';
       return;
     }
 
@@ -451,11 +451,11 @@ async function loadComments(id) {
       list.appendChild(li);
     });
   } catch (e) {
-    console.error('繧ｳ繝｡繝ｳ繝医Ο繝ｼ繝峨お繝ｩ繝ｼ:', e);
+    console.error('コメントロードエラー:', e);
   }
 }
 
-// 繧ｳ繝｡繝ｳ繝域兜遞ｿ
+// コメント投稿
 async function postComment(id) {
   const input = document.getElementById(`comment-input-${id}`);
   const text = input.value.trim();
@@ -472,14 +472,14 @@ async function postComment(id) {
       input.value = '';
       loadComments(id);
       
-      // 繧ｿ繧､繝繝ｩ繧､繝ｳ荳翫・繧ｳ繝｡繝ｳ繝井ｻｶ謨ｰ陦ｨ遉ｺ繧貞叉譎よ峩譁ｰ
+      // タイムライン上のコメント件数表示を即時更新
       const countSpan = document.getElementById(`comment-count-${id}`);
       if (countSpan) {
         countSpan.textContent = parseInt(countSpan.textContent) + 1;
       }
     }
   } catch (e) {
-    alert('繧ｳ繝｡繝ｳ繝域兜遞ｿ繧ｨ繝ｩ繝ｼ: ' + e.message);
+    alert('コメント投稿エラー: ' + e.message);
   }
 }
 
@@ -558,7 +558,7 @@ async function loadBooks() {
         actionsSection = `
           <div class="book-actions">
             <div class="form-group" style="margin-bottom: 5px;">
-              <label style="font-size: 11px;">騾ｲ謐励ｒ譖ｴ譁ｰ:</label>
+              <label style="font-size: 11px;">進捗を更新:</label>
               <input type="range" min="0" max="100" value="${book.progress_percent}" onchange="updateProgress(${book.id}, this.value)" style="width: 100%;">
             </div>
             <div class="secret-setting-box">
@@ -586,7 +586,7 @@ async function loadBooks() {
         const overlay = document.createElement('div');
         overlay.className = 'secret-lock-overlay';
         overlay.innerHTML = `
-          <h3>白 シークレット</h3>
+          <h3>🔒 シークレット</h3>
           <p>騾ｲ謐励ｒ髢ｲ隕ｧ縺吶ｋ縺ｫ縺ｯ <strong>${book.price_kc} KC</strong> 繧呈髪謇輔≧蠢・ｦ√′縺ゅｊ縺ｾ縺吶・/p>
           <button class="btn primary btn-sm" onclick="purchaseBook(${book.id}, '${book.owner_kc}', ${book.price_kc})">購入･</button>
         `;
@@ -605,8 +605,8 @@ function updateTimerBookSelect(books) {
   const select = document.getElementById('timer-book');
   const editSelect = document.getElementById('edit-log-book');
   
-  select.innerHTML = '<option value="">-- 譛ｪ邏蝉ｻ倥￠ --</option>';
-  editSelect.innerHTML = '<option value="">-- 譛ｪ邏蝉ｻ倥￠ --</option>';
+  select.innerHTML = '<option value="">-- 未紐付け --</option>';
+  editSelect.innerHTML = '<option value="">-- 未紐付け --</option>';
   
   const myBooks = books.filter(b => b.is_owner === 1);
   myBooks.forEach(book => {
@@ -632,7 +632,7 @@ async function updateProgress(bookId, val) {
       loadBooks();
     }
   } catch (e) {
-    alert('騾ｲ謐玲峩譁ｰ繧ｨ繝ｩ繝ｼ: ' + e.message);
+    alert('進捗更新エラー: ' + e.message);
   }
 }
 
@@ -649,7 +649,7 @@ async function toggleSecret(bookId, isSecret, price) {
       loadBooks();
     }
   } catch (e) {
-    alert('シークレット設定壹お繝ｩ繝ｼ: ' + e.message);
+    alert('シークレット設定エラー: ' + e.message);
   }
 }
 
@@ -694,7 +694,7 @@ async function purchaseBook(bookId, ownerAddress, price) {
     const sendData = await sendRes.json();
 
     if (!sendData.success) {
-      alert('送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+      alert('送金に失敗しました: ' + sendData.error);
       return;
     }
 
@@ -716,10 +716,10 @@ async function purchaseBook(bookId, ownerAddress, price) {
       loadBooks();
       refreshWalletInfo();
     } else {
-      alert('購入･險倬鹸縺ｮ菫晏ｭ倥↓螟ｱ謨励＠縺ｾ縺励◆: ' + purchaseData.error);
+      alert('購入記録の保存に失敗しました: ' + purchaseData.error);
     }
   } catch (e) {
-    alert('購入･蜃ｦ逅・ｸｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆: ' + e.message);
+    alert('購入処理中にエラーが発生しました: ' + e.message);
   }
 }
 
@@ -777,7 +777,7 @@ window.openEditModal = function(id, subject, bookId, durationSeconds, date) {
   document.getElementById('edit-modal').classList.remove('hidden');
 };
 
-// --- 繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ & 対決讖溯・ ---
+// --- ランキング & 対決機能 ---
 function setupDuelEvents() {
   document.getElementById('create-duel-btn').addEventListener('click', async () => {
     const opponentId = document.getElementById('duel-opponent').value;
@@ -826,7 +826,7 @@ function setupDuelEvents() {
       const sendData = await sendRes.json();
 
       if (!sendData.success) {
-        alert('プール繝・・繧ｸ繝・ヨ縺ｮ送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+        alert('プールデポジットの送金に失敗しました: ' + sendData.error);
         return;
       }
 
@@ -851,7 +851,7 @@ function setupDuelEvents() {
         refreshWalletInfo();
       }
     } catch (e) {
-      alert('対決逕ｳ隲九お繝ｩ繝ｼ: ' + e.message);
+      alert('対決申請エラー: ' + e.message);
     }
   });
 }
@@ -871,14 +871,14 @@ async function loadRankingAndDuels() {
       list.appendChild(li);
     });
   } catch (e) {
-    console.error('繝ｩ繝ｳ繧ｭ繝ｳ繧ｰ隱ｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ:', e);
+    console.error('ランキング読み込みエラー:', e);
   }
 
   try {
     const res = await fetch(`${API_URL}/users`);
     const users = await res.json();
     const select = document.getElementById('duel-opponent');
-    select.innerHTML = '<option value="">-- 対戦逶ｸ謇九ｒ選択・--</option>';
+    select.innerHTML = '<option value="">-- 対戦相手を選択 --</option>';
 
     users.forEach(user => {
       if (user.id !== currentUser.id) {
@@ -948,7 +948,7 @@ async function loadRankingAndDuels() {
       list.appendChild(div);
     });
   } catch (e) {
-    console.error('対決繝ｪ繧ｹ繝郁ｪｭ縺ｿ霎ｼ縺ｿ繧ｨ繝ｩ繝ｼ:', e);
+    console.error('対決リスト読み込みエラー:', e);
   }
 }
 
@@ -1000,7 +1000,7 @@ async function respondDuel(duelId, accept, amount) {
       const sendData = await sendRes.json();
 
       if (!sendData.success) {
-        alert('繝・・繧ｸ繝・ヨ縺ｮ送金縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + sendData.error);
+        alert('デポジットの送金に失敗しました: ' + sendData.error);
         return;
       }
 
@@ -1018,7 +1018,7 @@ async function respondDuel(duelId, accept, amount) {
         refreshWalletInfo();
       }
     } catch (e) {
-      alert('繧ｨ繝ｩ繝ｼ: ' + e.message);
+      alert('エラー: ' + e.message);
     }
   } else {
     try {
@@ -1033,7 +1033,7 @@ async function respondDuel(duelId, accept, amount) {
         loadRankingAndDuels();
       }
     } catch (e) {
-      alert('繧ｨ繝ｩ繝ｼ: ' + e.message);
+      alert('エラー: ' + e.message);
     }
   }
 }
@@ -1056,11 +1056,11 @@ async function completeDuel(duelId) {
       refreshWalletInfo();
     }
   } catch (e) {
-    alert('対決縺ｮ螳御ｺ・・逅・お繝ｩ繝ｼ: ' + e.message);
+    alert('対決の完了処理エラー: ' + e.message);
   }
 }
 
-// --- ウォレット設定・---
+// --- ウォレット設定 ---
 function setupWalletEvents() {
   document.getElementById('generate-wallet-btn').addEventListener('click', () => {
     const keyPair = window.nacl.sign.keyPair();
@@ -1096,10 +1096,10 @@ function setupWalletEvents() {
         alert(data.message);
         refreshWalletInfo();
       } else {
-        alert('逋ｻ骭ｲ縺ｫ螟ｱ謨励＠縺ｾ縺励◆: ' + data.error);
+        alert('登録に失敗しました: ' + data.error);
       }
     } catch (e) {
-      alert('騾壻ｿ｡繧ｨ繝ｩ繝ｼ: ' + e.message);
+      alert('通信エラー: ' + e.message);
     }
   });
 }
@@ -1159,7 +1159,7 @@ async function refreshWalletInfo() {
   try {
     const res = await fetch(`${KC_URL}/balance/${currentWallet.address}`);
     if (res.status === 404) {
-      document.getElementById('wallet-connection-status').textContent = '未登録 (アドレス生成済み)ｯ逕滓・貂医∩)';
+      document.getElementById('wallet-connection-status').textContent = '未登録 (アドレス生成済み)';
       document.getElementById('wallet-connection-status').className = 'status-value offline';
       document.getElementById('wallet-balance').textContent = '0 KC';
       document.getElementById('header-balance-badge').textContent = '0 KC';
@@ -1226,7 +1226,7 @@ function setupQuickRegisterEvents() {
       },
       (errorMessage) => {}
     ).catch(err => {
-      alert("繧ｫ繝｡繝ｩ縺ｮ蛻晄悄蛹悶↓螟ｱ謨励＠縺ｾ縺励◆: " + err);
+      alert("カメラの初期化に失敗しました: " + err);
       stopQuickScanAction();
     });
   });
@@ -1243,7 +1243,7 @@ function setupQuickRegisterEvents() {
       html5QrcodeScanner.stop().then(() => {
         html5QrcodeScanner = null;
       }).catch(err => {
-        console.error("繧ｹ繧ｭ繝｣繝ｳ蛛懈ｭ｢荳ｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆:", err);
+        console.error("スキャン停止中にエラーが発生しました:", err);
       });
     }
   }
@@ -1279,7 +1279,7 @@ function setupBarcodeEvents() {
       },
       (errorMessage) => {}
     ).catch(err => {
-      alert("繧ｫ繝｡繝ｩ縺ｮ蛻晄悄蛹悶↓螟ｱ謨励＠縺ｾ縺励◆: " + err);
+      alert("カメラの初期化に失敗しました: " + err);
       stopScanAction();
     });
   });
@@ -1295,7 +1295,7 @@ function setupBarcodeEvents() {
       html5QrcodeScanner.stop().then(() => {
         html5QrcodeScanner = null;
       }).catch(err => {
-        console.error("繧ｹ繧ｭ繝｣繝ｳ蛛懈ｭ｢荳ｭ縺ｫ繧ｨ繝ｩ繝ｼ縺檎匱逕溘＠縺ｾ縺励◆:", err);
+        console.error("スキャン停止中にエラーが発生しました:", err);
       });
     }
   }
